@@ -1,0 +1,654 @@
+
+game.StarterGui:SetCore("SendNotification", {
+    Title = "Loading...";
+    Text = "Might take a while";
+    Duration = 10;
+})
+
+
+
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Hitbox Hub",
+   Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+   LoadingTitle = "loading...",
+   LoadingSubtitle = "by Jhogian999999",
+   Theme = "AmberGlow", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+
+   DisableRayfieldPrompts = false,
+   DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = nil, -- Create a custom folder for your hub/game
+      FileName = "Hitbox Hub"
+   },
+
+   Discord = {
+      Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
+      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
+      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+   },
+
+   KeySystem = false, -- Set this to true to use our key system
+   KeySettings = {
+      Title = "Untitled",
+      Subtitle = "Key System",
+      Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
+      FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+      Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+   }
+})
+
+local MainTab = Window:CreateTab("Main", 4483362458) -- Title, Image
+local Section = MainTab:CreateSection("Hitbox")
+
+_G.HeadSize = 6.5
+_G.HeadTransparency = 0.6
+_G.HeadColor = Color3.fromRGB(0, 170, 255)
+_G.HeadDisabled = true
+_G.RootPartDisabled = true
+_G.OriginalSize = {}
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local IsTeamCheckEnabled = false
+
+-- Function to reset modifications
+local function ResetModifications()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local char = player.Character
+            if _G.OriginalSize[player] then
+                if char:FindFirstChild("Head") and _G.OriginalSize[player].Head then
+                    local head = char.Head
+                    head.Size = _G.OriginalSize[player].Head
+                    head.Transparency = 0
+                    head.Color = head.BrickColor.Color
+                    head.Material = Enum.Material.Plastic
+                    head.CanCollide = true
+                    head.Massless = false
+                end
+                if char:FindFirstChild("HumanoidRootPart") and _G.OriginalSize[player].HumanoidRootPart then
+                    local root = char.HumanoidRootPart
+                    root.Size = _G.OriginalSize[player].HumanoidRootPart
+                    root.Transparency = 0
+                    root.Material = Enum.Material.Plastic
+                    root.CanCollide = true
+                    root.Massless = false
+                end
+            end
+        end
+    end
+    _G.OriginalSize = {} -- Reset stored sizes
+end
+
+-- Toggle for modifying HEAD
+local HeadToggle = MainTab:CreateToggle({
+    Name = "Enable Head Modification",
+    CurrentValue = false,
+    Flag = "HeadToggle",
+    Callback = function(Value)
+        _G.HeadDisabled = not Value
+        if _G.HeadDisabled then
+            ResetModifications()
+        end
+    end,
+})
+
+-- Toggle for modifying HumanoidRootPart
+local RootPartToggle = MainTab:CreateToggle({
+    Name = "Enable Hitbox Modification",
+    CurrentValue = false,
+    Flag = "RootPartToggle",
+    Callback = function(Value)
+        _G.RootPartDisabled = not Value
+        if _G.RootPartDisabled then
+            ResetModifications()
+        end
+    end,
+})
+
+-- Toggle for team check
+local TeamCheckToggle = MainTab:CreateToggle({
+    Name = "Enable Team Check (Only Enemies)",
+    CurrentValue = false,
+    Flag = "Toggle2",
+    Callback = function(Value)
+        IsTeamCheckEnabled = Value
+    end,
+})
+
+-- Input for adjusting head size
+local HeadSizeInput = MainTab:CreateInput({
+    Name = "Head Size",
+    PlaceholderText = "Enter size",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local Value = tonumber(Text)
+        if Value then _G.HeadSize = Value end
+    end,
+})
+
+-- Input for transparency
+local TransparencyInput = MainTab:CreateInput({
+    Name = "Transparency (0-1)",
+    PlaceholderText = "Enter transparency",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local Value = tonumber(Text)
+        if Value and Value >= 0 and Value <= 1 then _G.HeadTransparency = Value end
+    end,
+})
+
+-- Color picker for hitbox color
+local ColorPicker = MainTab:CreateColorPicker({
+    Name = "Head Color",
+    Color = _G.HeadColor,
+    Flag = "ColorPicker1",
+    Callback = function(Value)
+        _G.HeadColor = Value
+    end,
+})
+
+-- Main function to apply modifications
+RunService.RenderStepped:Connect(function()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and (not IsTeamCheckEnabled or player.Team ~= LocalPlayer.Team) then
+            local char = player.Character
+            if char then
+                -- Modify Head
+                if not _G.HeadDisabled and char:FindFirstChild("Head") then
+                    local head = char.Head
+                    if not _G.OriginalSize[player] then
+                        _G.OriginalSize[player] = {}
+                    end
+                    if not _G.OriginalSize[player].Head then
+                        _G.OriginalSize[player].Head = head.Size
+                    end
+                    head.Size = Vector3.new(_G.HeadSize, _G.HeadSize, _G.HeadSize)
+                    head.Transparency = _G.HeadTransparency
+                    head.Color = _G.HeadColor
+                    head.Material = Enum.Material.Neon
+                    head.CanCollide = false
+                    head.Massless = true
+                end
+
+                -- Modify HumanoidRootPart
+                if not _G.RootPartDisabled and char:FindFirstChild("HumanoidRootPart") then
+                    local root = char.HumanoidRootPart
+                    if not _G.OriginalSize[player] then
+                        _G.OriginalSize[player] = {}
+                    end
+                    if not _G.OriginalSize[player].HumanoidRootPart then
+                        _G.OriginalSize[player].HumanoidRootPart = root.Size
+                    end
+                    root.Size = Vector3.new(_G.HeadSize, _G.HeadSize, _G.HeadSize)
+                    root.Transparency = _G.HeadTransparency
+                    root.Color = _G.HeadColor
+                    root.Material = Enum.Material.Neon
+                    root.CanCollide = false
+                    root.Massless = true
+                end
+            end
+        end
+    end
+end)
+
+
+local Section = MainTab:CreateSection("Speed")
+
+_G.Speed = 16 -- Default speed
+_G.OriginalSpeed = nil -- Store original speed
+_G.SpeedEnabled = false -- Toggle control
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Toggle for enabling/disabling the speed boost
+local Toggle = MainTab:CreateToggle({
+    Name = "Enable Speed Boost",
+    CurrentValue = false,
+    Flag = "Toggle1",
+    Callback = function(Value)
+        _G.SpeedEnabled = Value
+        if Value then
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                local Humanoid = LocalPlayer.Character.Humanoid
+                _G.OriginalSpeed = _G.OriginalSpeed or Humanoid.WalkSpeed
+                Humanoid.WalkSpeed = _G.Speed
+            end
+        else
+            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid.WalkSpeed = _G.OriginalSpeed or 16
+            end
+        end
+    end,
+})
+
+-- Adaptive Input for adjusting speed
+local SpeedInput = MainTab:CreateInput({
+    Name = "Set Speed",
+    PlaceholderText = "Enter speed value",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local Value = tonumber(Text)
+        if Value then _G.Speed = Value end
+        if _G.SpeedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = _G.Speed
+        end
+    end,
+})
+
+local Section = MainTab:CreateSection("Tpwalk")
+
+_G.TPWalkEnabled = false
+_G.TPSpeed = 10 -- Default teleport speed
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local Toggle = MainTab:CreateToggle({
+    Name = "Enable Teleport Walk",
+    CurrentValue = false,
+    Flag = "Toggle1",
+    Callback = function(Value)
+        _G.TPWalkEnabled = Value
+    end,
+})
+
+-- Adaptive Input for adjusting teleport speed
+local SpeedInput = MainTab:CreateInput({
+    Name = "Set Teleport Speed",
+    PlaceholderText = "Enter teleport speed value",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local Value = tonumber(Text)
+        if Value then _G.TPSpeed = Value end
+    end,
+})
+
+-- Teleport Walk Function
+RunService.Heartbeat:Connect(function()
+    if _G.TPWalkEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        local Humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+        local RootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if Humanoid and RootPart and Humanoid.MoveDirection.Magnitude > 0 then
+            RootPart:TranslateBy(Humanoid.MoveDirection * _G.TPSpeed * RunService.Heartbeat:Wait() * 10)
+        end
+    end
+end)
+
+local Section = MainTab:CreateSection("Jump")
+
+-- Initialize global variables
+_G.InfJumpEnabled = false
+local InfJumpConnection
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+
+-- Toggle for enabling/disabling infinite jump
+local InfJumpToggle = MainTab:CreateToggle({
+    Name = "Enable Infinite Jump",
+    CurrentValue = false,
+    Flag = "InfJumpToggle", -- Unique identifier for the toggle
+    Callback = function(Value)
+        _G.InfJumpEnabled = Value
+        if Value then
+            -- Enable infinite jump
+            if InfJumpConnection then InfJumpConnection:Disconnect() end
+            InfJumpConnection = UserInputService.JumpRequest:Connect(function()
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+                    LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end)
+        else
+            -- Disable infinite jump
+            if InfJumpConnection then InfJumpConnection:Disconnect() end
+        end
+    end,
+})
+
+local Divider = MainTab:CreateDivider()
+
+-- Initialize global variables
+_G.JumpPowerEnabled = false
+_G.JumpPowerValue = 50
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local DefaultJumpPower
+
+-- Function to enable/disable custom jump power
+local function ToggleJumpPower(Value)
+    _G.JumpPowerEnabled = Value
+    local Humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    
+    if Humanoid then
+        if Value then
+            -- Store default jump power before changing
+            DefaultJumpPower = Humanoid.UseJumpPower and Humanoid.JumpPower or Humanoid.JumpHeight
+            -- Apply custom jump power
+            if Humanoid.UseJumpPower then
+                Humanoid.JumpPower = _G.JumpPowerValue
+            else
+                Humanoid.JumpHeight = _G.JumpPowerValue
+            end
+        else
+            -- Restore original jump power when disabled
+            if Humanoid.UseJumpPower then
+                Humanoid.JumpPower = DefaultJumpPower
+            else
+                Humanoid.JumpHeight = DefaultJumpPower
+            end
+        end
+    end
+end
+
+-- Function to update jump power value
+local function SetJumpPower(Value)
+    _G.JumpPowerValue = Value
+    if _G.JumpPowerEnabled then
+        local Humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if Humanoid then
+            if Humanoid.UseJumpPower then
+                Humanoid.JumpPower = Value
+            else
+                Humanoid.JumpHeight = Value
+            end
+        end
+    end
+end
+
+-- Toggle for enabling/disabling custom jump power
+local JumpToggle = MainTab:CreateToggle({
+    Name = "Enable Custom Jump Power",
+    CurrentValue = false,
+    Flag = "JumpToggle",
+    Callback = function(Value)
+        ToggleJumpPower(Value)
+    end,
+})
+
+-- Adaptive Input for Jump Power
+local JumpInput = MainTab:CreateInput({
+    Name = "Set Jump Power",
+    PlaceholderText = "Enter value",
+    RemoveTextAfterFocusLost = false,
+    Flag = "JumpPowerInput",
+    Callback = function(Value)
+        local NumValue = tonumber(Value)
+        if NumValue then
+            SetJumpPower(NumValue)
+        end
+    end,
+})
+
+local VSTab = Window:CreateTab("Visuals", 4483362458)
+local Section =VSTab:CreateSection("Esp")
+
+-- Services & Variables
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local localPlayer = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local espObjects = {}
+local teamCheck = false
+
+local espEnabled = {
+    BoxESP = false,
+    LineESP = false,
+    NameESP = false,
+    HealthESP = false
+}
+
+local espColors = {
+    Team = Color3.fromRGB(0, 255, 0), -- Green for allies
+    Enemy = Color3.fromRGB(255, 0, 0) -- Red for enemies
+}
+
+local boxSize = 2 -- Default box size factor
+
+-- Function to Remove ESP
+local function RemoveESP(player)
+    if espObjects[player] then
+        for _, obj in pairs(espObjects[player]) do
+            if obj then obj:Remove() end
+        end
+        espObjects[player] = nil
+    end
+end
+
+-- Function to Create ESP
+local function CreateESP(player)
+    if not player.Character then return end
+    if not espObjects[player] then espObjects[player] = {} end
+
+    local isEnemy = not teamCheck or player.Team ~= localPlayer.Team
+    local color = isEnemy and espColors.Enemy or espColors.Team
+
+    -- Box ESP
+    if espEnabled.BoxESP and not espObjects[player].Box then
+        local box = Drawing.new("Square")
+        box.Visible = false
+        box.Color = color
+        box.Thickness = 2
+        box.Filled = false
+        espObjects[player].Box = box
+    end
+
+    -- Line ESP
+    if espEnabled.LineESP and not espObjects[player].Line then
+        local line = Drawing.new("Line")
+        line.Visible = false
+        line.Color = color
+        line.Thickness = 2
+        espObjects[player].Line = line
+    end
+
+    -- Name ESP
+    if espEnabled.NameESP and not espObjects[player].Name then
+        local nameTag = Drawing.new("Text")
+        nameTag.Visible = false
+        nameTag.Color = color
+        nameTag.Size = 14
+        nameTag.Center = true
+        nameTag.Outline = true
+        espObjects[player].Name = nameTag
+    end
+
+    -- Health ESP
+    if espEnabled.HealthESP and not espObjects[player].Health then
+        local healthText = Drawing.new("Text")
+        healthText.Visible = false
+        healthText.Color = color
+        healthText.Size = 14
+        healthText.Center = true
+        healthText.Outline = true
+        espObjects[player].Health = healthText
+    end
+end
+
+-- Function to Update ESP
+local function UpdateESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local root = player.Character.HumanoidRootPart
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            local rootPos, onScreen = camera:WorldToViewportPoint(root.Position)
+
+            local isEnemy = not teamCheck or player.Team ~= localPlayer.Team
+            local color = isEnemy and espColors.Enemy or espColors.Team
+
+            if onScreen then
+                if not espObjects[player] then
+                    CreateESP(player)
+                end
+
+                -- Box ESP
+                if espEnabled.BoxESP and espObjects[player].Box then
+                    local height = math.abs(camera:WorldToViewportPoint(root.Position + Vector3.new(0, 3, 0)).Y - rootPos.Y) * boxSize
+                    local width = height / 1.5
+                    espObjects[player].Box.Size = Vector2.new(width, height)
+                    espObjects[player].Box.Position = Vector2.new(rootPos.X - width / 2, rootPos.Y - height / 2)
+                    espObjects[player].Box.Color = color
+                    espObjects[player].Box.Visible = true
+                elseif espObjects[player].Box then
+                    espObjects[player].Box.Visible = false
+                end
+
+                -- Line ESP
+                if espEnabled.LineESP and espObjects[player].Line then
+                    espObjects[player].Line.From = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y)
+                    espObjects[player].Line.To = Vector2.new(rootPos.X, rootPos.Y)
+                    espObjects[player].Line.Color = color
+                    espObjects[player].Line.Visible = true
+                elseif espObjects[player].Line then
+                    espObjects[player].Line.Visible = false
+                end
+
+                -- Name ESP
+                if espEnabled.NameESP and espObjects[player].Name then
+                    espObjects[player].Name.Text = player.Name
+                    espObjects[player].Name.Position = Vector2.new(rootPos.X, rootPos.Y - 20)
+                    espObjects[player].Name.Color = color
+                    espObjects[player].Name.Visible = true
+                elseif espObjects[player].Name then
+                    espObjects[player].Name.Visible = false
+                end
+
+                -- Health ESP
+                if espEnabled.HealthESP and humanoid and espObjects[player].Health then
+                    espObjects[player].Health.Text = "HP: " .. math.floor(humanoid.Health)
+                    espObjects[player].Health.Position = Vector2.new(rootPos.X, rootPos.Y - 35)
+                    espObjects[player].Health.Color = color
+                    espObjects[player].Health.Visible = true
+                elseif espObjects[player].Health then
+                    espObjects[player].Health.Visible = false
+                end
+            else
+                RemoveESP(player) -- Destroy ESP when out of view
+            end
+        else
+            RemoveESP(player) -- Remove ESP for players who left or reset
+        end
+    end
+end
+
+-- Remove ESP when a player leaves
+Players.PlayerRemoving:Connect(function(player)
+    RemoveESP(player)
+end)
+
+-- Auto Apply ESP to New Players
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        CreateESP(player)
+    end)
+end)
+
+-- Update ESP Every Frame
+RunService.RenderStepped:Connect(UpdateESP)
+
+-- UI Elements
+VSTab:CreateToggle({
+    Name = "Box ESP",
+    CurrentValue = false,
+    Flag = "Toggle_BoxESP", -- Use unique flag for saving
+    Callback = function(Value)
+        espEnabled.BoxESP = Value
+    end,
+})
+
+VSTab:CreateToggle({
+    Name = "Line ESP",
+    CurrentValue = false,
+    Flag = "Toggle_LineESP", -- Use unique flag for saving
+    Callback = function(Value)
+        espEnabled.LineESP = Value
+    end,
+})
+
+VSTab:CreateToggle({
+    Name = "Name ESP",
+    CurrentValue = false,
+    Flag = "Toggle_NameESP", -- Use unique flag for saving
+    Callback = function(Value)
+        espEnabled.NameESP = Value
+    end,
+})
+
+VSTab:CreateToggle({
+    Name = "Health ESP",
+    CurrentValue = false,
+    Flag = "Toggle_HealthESP", -- Use unique flag for saving
+    Callback = function(Value)
+        espEnabled.HealthESP = Value
+    end,
+})
+
+VSTab:CreateToggle({
+    Name = "Team Check",
+    CurrentValue = false,
+    Flag = "Toggle_TeamCheck", -- Use unique flag for saving
+    Callback = function(Value)
+        teamCheck = Value
+    end,
+})
+
+VSTab:CreateColorPicker({
+    Name = "Ally Color",
+    Color = Color3.fromRGB(0, 255, 0),
+    Flag = "ColorPicker_Team", -- Use unique flag for saving
+    Callback = function(Value)
+        espColors.Team = Value
+    end
+})
+
+VSTab:CreateColorPicker({
+    Name = "Enemy Color",
+    Color = Color3.fromRGB(255, 0, 0),
+    Flag = "ColorPicker_Enemy", -- Use unique flag for saving
+    Callback = function(Value)
+        espColors.Enemy = Value
+    end
+})
+
+VSTab:CreateSlider({
+    Name = "Box Size",
+    Range = {1, 5},
+    Increment = 0.1,
+    Suffix = "Size",
+    CurrentValue = 2,
+    Flag = "Slider_BoxSize", -- Use unique flag for saving
+    Callback = function(Value)
+        boxSize = Value
+    end,
+})
+
+
+
+local MiscTab = Window:CreateTab("Misc", 4483362458)
+
+local Button = MiscTab:CreateButton({
+   Name = "Inf Yield",
+   Callback = function()
+   loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+   end,
+})
+
+local Button = MiscTab:CreateButton({
+   Name = "Dex",
+   Callback = function()
+   loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))()
+   end,
+})

@@ -394,7 +394,8 @@ local JumpInput = MainTab:CreateInput({
 })
 
 local VSTab = Window:CreateTab("Visuals", 4483362458)
-local Section =VSTab:CreateSection("Esp")
+local Section = VSTab:CreateSection("Esp")
+
 
 -- Services & Variables
 local Players = game:GetService("Players")
@@ -415,8 +416,6 @@ local espColors = {
     Team = Color3.fromRGB(0, 255, 0), -- Green for allies
     Enemy = Color3.fromRGB(255, 0, 0) -- Red for enemies
 }
-
-local boxSize = 2 -- Default box size factor
 
 -- Function to Remove ESP
 local function RemoveESP(player)
@@ -496,7 +495,7 @@ local function UpdateESP()
 
                 -- Box ESP
                 if espEnabled.BoxESP and espObjects[player].Box then
-                    local height = math.abs(camera:WorldToViewportPoint(root.Position + Vector3.new(0, 3, 0)).Y - rootPos.Y) * boxSize
+                    local height = math.abs(camera:WorldToViewportPoint(root.Position + Vector3.new(0, 3, 0)).Y - rootPos.Y) * 2
                     local width = height / 1.5
                     espObjects[player].Box.Size = Vector2.new(width, height)
                     espObjects[player].Box.Position = Vector2.new(rootPos.X - width / 2, rootPos.Y - height / 2)
@@ -562,53 +561,48 @@ RunService.RenderStepped:Connect(UpdateESP)
 -- UI Elements
 VSTab:CreateToggle({
     Name = "Box ESP",
-    CurrentValue = false,
-    Flag = "Toggle_BoxESP", -- Use unique flag for saving
+    Default = false,
     Callback = function(Value)
         espEnabled.BoxESP = Value
-    end,
+    end
 })
 
 VSTab:CreateToggle({
     Name = "Line ESP",
-    CurrentValue = false,
-    Flag = "Toggle_LineESP", -- Use unique flag for saving
+    Default = false,
     Callback = function(Value)
         espEnabled.LineESP = Value
-    end,
+    end
 })
 
 VSTab:CreateToggle({
     Name = "Name ESP",
-    CurrentValue = false,
-    Flag = "Toggle_NameESP", -- Use unique flag for saving
+    Default = false,
     Callback = function(Value)
         espEnabled.NameESP = Value
-    end,
+    end
 })
 
 VSTab:CreateToggle({
     Name = "Health ESP",
-    CurrentValue = false,
-    Flag = "Toggle_HealthESP", -- Use unique flag for saving
+    Default = false,
     Callback = function(Value)
         espEnabled.HealthESP = Value
-    end,
+    end
 })
 
 VSTab:CreateToggle({
     Name = "Team Check",
-    CurrentValue = false,
-    Flag = "Toggle_TeamCheck", -- Use unique flag for saving
+    Default = false,
     Callback = function(Value)
         teamCheck = Value
-    end,
+    end
 })
 
 VSTab:CreateColorPicker({
     Name = "Ally Color",
     Color = Color3.fromRGB(0, 255, 0),
-    Flag = "ColorPicker_Team", -- Use unique flag for saving
+    Flag = "ColorPicker_Team",
     Callback = function(Value)
         espColors.Team = Value
     end
@@ -617,25 +611,27 @@ VSTab:CreateColorPicker({
 VSTab:CreateColorPicker({
     Name = "Enemy Color",
     Color = Color3.fromRGB(255, 0, 0),
-    Flag = "ColorPicker_Enemy", -- Use unique flag for saving
+    Flag = "ColorPicker_Enemy",
     Callback = function(Value)
         espColors.Enemy = Value
     end
 })
 
-VSTab:CreateSlider({
-    Name = "Box Size",
-    Range = {1, 5},
-    Increment = 0.1,
-    Suffix = "Size",
-    CurrentValue = 2,
-    Flag = "Slider_BoxSize", -- Use unique flag for saving
-    Callback = function(Value)
-        boxSize = Value
-    end,
+VSTab:CreateButton({
+    Name = "Destroy ESP",
+    Callback = function()
+        for _, player in pairs(Players:GetPlayers()) do
+            RemoveESP(player)
+        end
+    end
 })
 
-
+local Button = VSTab:CreateButton({
+   Name = "esp",
+   Callback = function()
+   loadstring(game:HttpGet("https://pastebin.com/raw/ansLUEPe", true))()
+   end,
+})
 
 local MiscTab = Window:CreateTab("Misc", 4483362458)
 
@@ -652,3 +648,4 @@ local Button = MiscTab:CreateButton({
    loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/main/dex.lua"))()
    end,
 })
+
